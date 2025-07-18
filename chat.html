@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Responsivo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    #login, #chat {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #chat {
+      display: none;
+      flex-direction: column;
+      height: 70vh;
+    }
+
+    #mensagens {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      background: #fafafa;
+    }
+
+    .mensagem {
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+      position: relative;
+      word-wrap: break-word;
+    }
+
+    .mensagem .apagar {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #inputMensagem {
+      display: flex;
+    }
+
+    #inputMensagem input {
+      flex: 1;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 5px 0 0 5px;
+      border: 1px solid #ccc;
+      border-right: none;
+    }
+
+    #inputMensagem button {
+      padding: 10px 20px;
+      border: 1px solid #007bff;
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      border-radius: 0 5px 5px 0;
+      cursor: pointer;
+    }
+
+    @media (max-width: 480px) {
+      #chat {
+        height: 75vh;
+      }
+
+      .mensagem {
+        font-size: 0.9em;
+      }
+
+      #inputMensagem input {
+        font-size: 0.9em;
+      }
+
+      #inputMensagem button {
+        font-size: 0.9em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="login">
+      <h2>Login</h2>
+      <label for="nomeUsuario">Nome:</label>
+      <input type="text" id="nomeUsuario" placeholder="Digite seu nome" />
+      <label for="senhaUsuario">Senha:</label>
+      <input type="password" id="senhaUsuario" placeholder="Digite sua senha" />
+      <button onclick="logar()">Entrar</button>
+    </div>
+
+    <div id="chat">
+      <h2>Chat</h2>
+      <div id="mensagens"></div>
+      <div id="inputMensagem">
+        <input type="text" id="mensagemTexto" placeholder="Digite sua mensagem" />
+        <button onclick="enviarMensagem()">Enviar</button>
+      </div>
+      <button onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <script>
+    let usuarioAtual = null;
+
+    window.onload = function () {
+      const usuario = localStorage.getItem('usuarioChat');
+      if (usuario) {
+        usuarioAtual = JSON.parse(usuario);
+        mostrarChat();
+        carregarMensagens();
+      }
+    };
+
+    function logar() {
+      const nome = document.getElementById('nomeUsuario').value.trim();
+      const senha = document.getElementById('senhaUsuario').value;
+
+      if (!nome || !senha) {
+        alert('Preencha nome e senha');
+        return;
+      }
+
+      usuarioAtual = { nome, senha };
+      localStorage.setItem('usuarioChat', JSON.stringify(usuarioAtual));
+
+      mostrarChat();
+      carregarMensagens();
+    }
+
+    function mostrarChat() {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('chat').style.display = 'flex';
+    }
+
+    function enviarMensagem() {
+      const texto = document.getElementById('mensagemTexto').value.trim();
+      if (!texto) return;
+
+      const mensagens = JSON.parse(localStorage.getItem('mensagensChat')) || [];
+
+      const mensagemObj = {
+        id: Date.now(),
+        usuario: usuarioAtual.nome,
+        texto: texto
+      };
+
+      mensagens.push(mensagemObj);
+      localStorage.setItem('mensagensChat', JSON.stringify(mensagens));
+
+      document.getElementById('mensagemTexto').value = '';
+      carregarMensagens();
+    }
+
+    function carregarMensagens() {
+      const mensagens = JSON.parse(localStorage.getItem('mensagensChat')) || [];
+      const divMensagens = document.getElementById('mensagens');
+      divMensagens.innerHTML = '';
+
+      mensagens.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'mensagem';
+        div.textContent = `${m.usuario}: ${m.texto}`;
+
+        if (m.usuario === usuarioAtual.nome) {
+          const btnApagar = document.createElement('button');
+          btnApagar.textContent = 'X';
+          btnApagar.className = 'apagar';
+          btnApagar.onclick = () => apagarMensagem(m.id);
+          div.appendChild(btnApagar);
+        }
+
+        divMensagens.appendChild(div);
+      });
+
+      divMensagens.scrollTop = divMensagens.scrollHeight;
+    }
+
+    function apagarMensagem(id) {
+      let mensagens = JSON.parse(localStorage.getItem('mensagensChat')) || [];
+      mensagens = mensagens.filter(m => m.id !== id);
+      localStorage.setItem('mensagensChat', JSON.stringify(mensagens));
+      carregarMensagens();
+    }
+
+    function sair() {
+      usuarioAtual = null;
+      localStorage.removeItem('usuarioChat');
+      document.getElementById('chat').style.display = 'none';
+      document.getElementById('login').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
